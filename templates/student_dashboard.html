@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - College ERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1e3a8a;
+            --gradient-start: #2563eb;
+            --gradient-end: #1d4ed8;
+            --bg-light: #f8fafc;
+        }
+        body { background-color: var(--bg-light); color: #334155; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-custom { background-color: var(--primary-blue); padding: 1rem 0; }
+        .card-custom { 
+            border: 1px solid #e2e8f0; 
+            background: #ffffff; 
+            border-radius: 16px; 
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+        .stats-box {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .cgpa-box {
+            background: linear-gradient(135deg, #111827, #1f2937);
+            color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark navbar-custom sticky-top shadow-sm">
+        <div class="container">
+            <span class="navbar-brand d-flex align-items-center gap-2 fw-bold">
+                <span>🎓</span> Student Self-Service Portal
+            </span>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-white fw-semibold bg-dark bg-opacity-25 px-3 py-1.5 rounded-pill small">
+                    Welcome, <span class="text-warning fw-bold">{{ student_name }}</span>
+                </span>
+                <a href="/logout" class="btn btn-sm btn-light fw-bold text-danger px-3 shadow-sm">Logout 🚪</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row g-4">
+            
+            <div class="col-lg-4">
+                <div class="stats-box shadow mb-4">
+                    <h5 class="text-white-50 uppercase small fw-bold mb-1">OVERALL ATTENDANCE</h5>
+                    <h1 class="display-4 fw-black my-2">{{ overall_attendance }}%</h1>
+                    <p class="small mb-0 opacity-75">Registered Email: {{ student_email }}</p>
+                    <div class="progress mt-3" style="height: 8px; background: rgba(255,255,255,0.2);">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ overall_attendance }}%"></div>
+                    </div>
+                </div>
+
+                <div class="cgpa-box shadow">
+                    <h5 class="text-muted text-uppercase small fw-bold mb-1" style="color: #9ca3af !important;">CURRENT SYSTEM CGPA</h5>
+                    <h1 class="display-3 fw-bold text-success my-2">{{ "%.2f"|format(auto_cgpa) }}</h1>
+                    <p class="small mb-0 text-white-50">Based automatically on current CIE evaluation out of 10.00 Scale</p>
+                    <div class="mt-3">
+                        <span class="badge bg-success px-3 py-2 rounded-pill">Status: Active Evaluation</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+            <!-- Is code ko student_dashboard.html mein wahan paste karein jahan button dikhana hai -->
+<div style="margin-top: 20px;">
+    <a href="{{ url_for('download_admit_card') }}" style="padding: 10px 15px; background: #28a745; color: white; text-decoration: none; border-radius: 4px; display: inline-block;">Download Admit Card</a>
+</div>
+                <div class="card card-custom">
+                    <h4 class="fw-bold mb-4 d-flex align-items-center gap-2" style="color: var(--primary-blue);">
+                        <span>📅</span> Subject-Wise Attendance Tracker
+                    </h4>
+                    <div class="table-responsive">
+                        <table class="table align-middle table-hover border mb-0 text-center">
+                            <thead class="table-dark small">
+                                <tr>
+                                    <th class="text-start ps-3">Subject Name</th>
+                                    <th>Faculty In-Charge (Live)</th>
+                                    <th>Conducted</th>
+                                    <th>Present</th>
+                                    <th>Absent</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for att in attendance_report %}
+                                <tr>
+                                    <td class="text-start ps-3 fw-bold text-dark" style="font-size: 14px;">{{ att.subject }}</td>
+                                    <td>
+                                        {% if att.faculty == 'Not Marked Yet' %}
+                                            <span class="badge bg-secondary py-1.5 px-3 fw-bold">{{ att.faculty }}</span>
+                                        {% else %}
+                                            <span class="badge bg-success bg-opacity-10 text-success py-1.5 px-3 fw-bold border border-success border-opacity-25">{{ att.faculty }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold">{{ att.total }}</td>
+                                    <td class="text-success fw-bold">{{ att.present }}</td>
+                                    <td class="text-danger fw-bold">{{ att.absent }}</td>
+                                    <td>
+                                        <span class="fw-bold {% if att.percentage >= 75 %}text-success{% else %}text-danger{% endif %}">
+                                            {{ att.percentage }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card card-custom">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: #16a34a;">
+                            <span>🏆</span> Continuous Internal Evaluation (CIE) Marksheet
+                        </h4>
+                        <span class="badge bg-success-subtle text-success border border-success border-opacity-25 fw-bold px-3 py-2">Internal Only</span>
+                    </div>
+                    <p class="text-muted small mb-3">⚠️ *Note: As per institute directives, End Semester Examination (ESE) components are currently confidential and not visible on this terminal.*</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table align-middle border mb-0 text-center">
+                            <thead class="table-success small">
+                                <tr>
+                                    <th class="text-start ps-3">Course / Subject Title</th>
+                                    <th>CIE Theory (Max 60)</th>
+                                    <th>CIE Practical (Max 60)</th>
+                                    <th>Total CIE (Max 120)</th>
+                                    <th class="bg-dark text-white">Grade Point</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mk in marks_report %}
+                                <tr>
+                                    <td class="text-start ps-3 fw-semibold">{{ mk.subject }}</td>
+                                    <td class="fw-bold text-secondary">{{ mk.cie_theory }}</td>
+                                    <td class="fw-bold text-secondary">{{ mk.cie_practical }}</td>
+                                    <td class="fw-bold text-success bg-light">{{ mk.total_cie }}</td>
+                                    <td class="fw-bold bg-dark text-warning">{{ mk.grade_point }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

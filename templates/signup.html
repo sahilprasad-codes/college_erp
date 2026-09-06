@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration - College ERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .signup-card {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(30, 41, 59, 0.05);
+            padding: 2.5rem;
+        }
+        .main-heading {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1e3a8a;
+        }
+        .form-control, .form-select {
+            border: 2px solid #cbd5e1;
+            font-weight: 600;
+            color: #1e293b;
+            border-radius: 10px;
+            padding: 12px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .btn-register {
+            background: #2563eb; /* कॉर्पोरेट ब्लू बटन */
+            color: white;
+            font-weight: 800;
+            font-size: 1rem;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            transition: background 0.2s;
+        }
+        .btn-register:hover { background: #1d4ed8; color: white; }
+        .link-blue { color: #2563eb; font-weight: 700; text-decoration: none; }
+        .link-blue:hover { text-underline-offset: 3px; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card signup-card">
+                    <div class="text-center mb-4">
+                        <span class="main-heading">📝 CREATE ACCOUNT</span>
+                        <p class="text-muted small mt-1 fw-bold">Registering Role: {{ role.upper() }}</p>
+                    </div>
+
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for msg in messages %}
+                                <div class="alert alert-warning text-center py-2 small fw-bold text-dark rounded-3 mb-3">{{ msg }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="/signup/{{ role }}">
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-bold">FULL LEGAL NAME</label>
+                            <input type="text" name="name" class="form-control" placeholder="Enter full name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-bold">EMAIL ADDRESS</label>
+                            <input type="email" name="email" class="form-control" placeholder="name@college.com" required>
+                        </div>
+
+                        {% if role == 'student' %}
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-bold">SELECT ALLOCATED CLASS</label>
+                            <select name="class_name" class="form-select" required>
+                                <option value="CSE A">CSE A</option>
+                                <option value="CSE B">CSE B</option>
+                                <option value="CSE C">CSE C</option>
+                                <option value="CSE D">CSE D</option>
+                            </select>
+                        </div>
+                        {% elif role == 'faculty' %}
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-bold">DEPARTMENT NAME</label>
+                            <input type="text" name="department" class="form-control" placeholder="e.g. Computer Science" required>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label class="form-label text-secondary small fw-bold">CREATE PASSWORD</label>
+                            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-register w-100">SUBMIT REGISTRATION 🎉</button>
+                        
+                        <div class="text-center mt-3">
+                            <a href="/login/{{ role }}" class="link-blue small fw-bold">Already have an account? Log In Here</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

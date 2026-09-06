@@ -1,0 +1,257 @@
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+import sqlite3
+import os
+
+app = Flask(__name__)
+app.secret_key = "highly_secure_modern_erp_secret_key_2026"
+
+def init_db():
+    conn = sqlite3.connect('college_erp.db')
+    cursor = conn.cursor()
+    
+    # 1. Users Table (Email as username)
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE, 
+                        password TEXT,
+                        role TEXT)''')
+    
+    # 2. Students Table
+    cursor.execute('''CREATE TABLE IF NOT EXISTS students (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT,
+                        email TEXT UNIQUE,
+                        class_name TEXT)''')
+    
+    # 3. Faculty Table
+    cursor.execute('''CREATE TABLE IF NOT EXISTS faculty (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT,
+                        email TEXT UNIQUE,
+                        department TEXT)''')
+                        
+    # 4. Attendance Table
+    cursor.execute('''CREATE TABLE IF NOT EXISTS attendance (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        email TEXT,
+                        date TEXT,
+                        subject TEXT,
+                        class_name TEXT,
+                        status TEXT)''')
+
+    # 5. Marks Table
+    cursor.execute('''CREATE TABLE IF NOT EXISTS marks (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        email TEXT,
+                        subject TEXT,
+                        score INTEGER)''')
+
+    # Seed Default Admin Account
+    cursor.execute("SELECT COUNT(*) FROM users WHERE role='admin'")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO users (username, password, role) VALUES ('admin@college.com', 'admin123', 'admin')")
+        
+    conn.commit()
+    conn.close()
+
+init_db()
+
+@app.route('/')
+def index():
+    return redirect(url_for('login', role='student'))
+
+@app.route('/login/<role>', methods=['GET', 'POST'])
+def login(role):
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        
+        conn = sqlite3.connect('college_erp.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE username=? AND password=? AND role=?", (email, password, role))
+        user = cursor.fetchone()
+        conn.close()
+        
+        if user:
+            session['username'] = email
+            session['role'] = role
+            return redirect(url_for(f'{role}_dashboard'))
+        else:
+            flash("Invalid credentials provided.", "danger")
+            
+    return render_template('login.html', role=role)
+
+@app.route('/signup/<role>', methods=['GET', 'POST'])
+def signup(role):
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        
+        conn = sqlite3.connect('college_erp.db')
+        cursor = conn.cursor()
+        
+        try:
+            if role == 'student':
+                class_name = request.form['class_name']
+                cursor.execute("INSERT INTO students (name, email, class_name) VALUES (?, ?, ?)", (name, email, class_name))
+            elif role == 'faculty':
+                department = request.form['department']
+                cursor.execute("INSERT INTO faculty (name, email, department) VALUES (?, ?, ?)", (name, email, department))
+                
+            cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (email, password, role))
+            conn.commit()
+            flash("Account registered successfully!", "success")
+            return redirect(url_for('login', role=role))
+        except sqlite3.IntegrityError:
+            flash("This email address is already registered.", "warning")
+        finally:
+            conn.close()
+            
+    return render_template('signup.html', role=role)
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        new_password = request.form['new_password']
+        role = request.form['role']
+        
+        conn = sqlite3.connect('college_erp.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE username=? AND role=?", (email, role))
+        user = cursor.fetchone()
+        
+        if user:
+            cursor.execute("UPDATE users SET password=? WHERE username=? AND role=?", (new_password, email, role))
+            conn.commit()
+            flash("Password reset successfully.", "success")
+            return redirect(url_for('login', role=role))
+        else:
+            flash("No account found matching this email.", "danger")
+        conn.close()
+        
+    return render_template('forgot_password.html')
+
+@app.route('/admin_dashboard', methods=['GET', 'POST'])
+def admin_dashboard():
+    if 'role' not in session or session['role'] != 'admin': 
+        return redirect(url_for('login', role='student'))
+        
+    conn = sqlite3.connect('college_erp.db')
+    cursor = conn.cursor()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'single_student':
+            name = request.form['name']
+            email = request.form['email']
+            class_name = request.form['class_name']
+            password = request.form['password']
+            try:
+                cursor.execute("INSERT INTO students (name, email, class_name) VALUES (?, ?, ?)", (name, email, class_name))
+                cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, 'student')", (email, password))
+                conn.commit()
+                flash("Student record created successfully.", "success")
+            except sqlite3.IntegrityError:
+                flash("Duplicate email found.", "danger")
+        elif action == 'single_faculty':
+            name = request.form['name']
+            email = request.form['email']
+            department = request.form['department']
+            password = request.form['password']
+            try:
+                cursor.execute("INSERT INTO faculty (name, email, department) VALUES (?, ?, ?)", (name, email, department))
+                cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, 'faculty')", (email, password))
+                conn.commit()
+                flash("Faculty record created successfully.", "success")
+            except sqlite3.IntegrityError:
+                flash("Duplicate email found.", "danger")
+                
+    cursor.execute("SELECT * FROM students")
+    students = cursor.fetchall()
+    cursor.execute("SELECT * FROM faculty")
+    faculties = cursor.fetchall()
+    conn.close()
+    return render_template('admin_dashboard.html', students=students, faculties=faculties)
+
+# ---- FIXED FACULTY ROUTE USING EMAIL ----
+@app.route('/faculty_dashboard', methods=['GET', 'POST'])
+def faculty_dashboard():
+    if 'role' not in session or session['role'] != 'faculty': 
+        return redirect(url_for('login', role='faculty'))
+    
+    available_classes = ['CSE A', 'CSE B', 'CSE C', 'CSE D']
+    selected_class = request.args.get('class_name', '')
+    students = []
+    
+    if selected_class:
+        conn = sqlite3.connect('college_erp.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM students WHERE class_name=?", (selected_class,))
+        students = cursor.fetchall()
+        conn.close()
+        
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'attendance':
+            date = request.form['date']
+            subject = request.form['subject']
+            class_name = request.form['class_name']
+            
+            conn = sqlite3.connect('college_erp.db')
+            cursor = conn.cursor()
+            cursor.execute("SELECT email FROM students WHERE class_name=?", (class_name,))
+            class_emails = cursor.fetchall()
+            
+            for row in class_emails:
+                email = row[0]
+                status = request.form.get(f'status_{email}', 'Absent')
+                cursor.execute("INSERT INTO attendance (email, date, subject, class_name, status) VALUES (?, ?, ?, ?, ?)", 
+                               (email, date, subject, class_name, status))
+            conn.commit()
+            conn.close()
+            flash("Attendance submitted successfully!", "success")
+            return redirect(url_for('faculty_dashboard', class_name=class_name))
+            
+        elif action == 'marks':
+            student_email = request.form['student_email']
+            subject = request.form['subject']
+            score = request.form['score']
+            
+            conn = sqlite3.connect('college_erp.db')
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO marks (email, subject, score) VALUES (?, ?, ?)", (student_email, subject, score))
+            conn.commit()
+            conn.close()
+            flash("Marks uploaded successfully!", "success")
+            return redirect(url_for('faculty_dashboard', class_name=selected_class))
+
+    return render_template('faculty_dashboard.html', classes=available_classes, students=students, selected_class=selected_class)
+
+# ---- FIXED STUDENT ROUTE USING EMAIL ----
+@app.route('/student_dashboard')
+def student_dashboard():
+    if 'role' not in session or session['role'] != 'student': 
+        return redirect(url_for('login', role='student'))
+    
+    student_email = session['username']
+    conn = sqlite3.connect('college_erp.db')
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT date, subject, class_name, status FROM attendance WHERE email=?", (student_email,))
+    attendance = cursor.fetchall()
+    
+    cursor.execute("SELECT subject, score FROM marks WHERE email=?", (student_email,))
+    marks = cursor.fetchall()
+    
+    conn.close()
+    return render_template('student_dashboard.html', email=student_email, attendance=attendance, marks=marks)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login', role='student'))
+
+if __name__ == '__main__':
+    app.run(debug=True)

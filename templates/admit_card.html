@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Official Admit Card - {{ student.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Screen Styling */
+        body { font-family: 'Inter', sans-serif; background: #e2e8f0; margin: 0; padding: 20px; color: #111; }
+        .admit-card { background: #fff; width: 750px; margin: auto; padding: 35px 40px; border: 2px solid #0f172a; box-shadow: 0 4px 15px rgba(0,0,0,0.15); position: relative; box-sizing: border-box; }
+        
+        /* Official Header */
+        .header { text-align: center; border-bottom: 3px double #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
+        .header h2 { margin: 0; font-family: 'Times New Roman', serif; font-size: 22px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #0f172a; }
+        .header h3 { margin: 4px 0; font-size: 14px; font-weight: 600; color: #334155; }
+        .header p { margin: 2px 0 0 0; font-size: 12px; color: #475569; }
+
+        /* Student Details Section with Photo Box */
+        .details-wrapper { display: flex; justify-content: space-between; margin-bottom: 25px; align-items: flex-start; }
+        .info-table { width: 78%; border-collapse: collapse; font-size: 13px; }
+        .info-table td { padding: 6px 8px; border: 1px solid #cbd5e1; }
+        .label { font-weight: bold; color: #334155; width: 30%; background-color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .value { color: #0f172a; font-weight: 500; }
+
+        .photo-box { width: 110px; height: 130px; border: 1px solid #0f172a; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 11px; color: #64748b; background: #f8fafc !important; font-weight: 500; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+        /* Exam Table */
+        .exam-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        .exam-table th, .exam-table td { border: 1px solid #0f172a; padding: 8px 10px; text-align: center; }
+        .exam-table th { background-color: #0f172a !important; color: white !important; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .text-start { text-align: left !important; }
+        .sign-col { height: 25px; }
+
+        /* Instructions */
+        .instructions { margin-top: 20px; font-size: 11px; color: #334155; border-top: 1px solid #cbd5e1; padding-top: 10px; }
+        .instructions ul { margin: 4px 0 0 0; padding-left: 15px; }
+        .instructions li { margin-bottom: 2px; }
+
+        /* Signatures */
+        .footer-sigs { display: flex; justify-content: space-between; margin-top: 35px; font-size: 12px; font-weight: bold; }
+        .sig-line { border-top: 1px solid #0f172a; width: 160px; text-align: center; padding-top: 4px; }
+
+        /* Print Button Style */
+        .print-btn { display: block; width: 180px; margin: 20px auto; padding: 12px; background: #0f172a; color: white; text-align: center; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; }
+        .print-btn:hover { background: #1e293b; }
+
+        /* --- PERFECT PRINT MEDIA RULES --- */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .admit-card {
+                border: 2px solid #000 !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 15px !important;
+                margin: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Print Button (Hidden automatically on print) -->
+    <button class="print-btn no-print" onclick="window.print()">🖨️ Print Admit Card</button>
+
+    <div class="admit-card">
+        <!-- Top Institutional Header -->
+        <div class="header">
+            <h2>COLLEGE ERP MANAGEMENT SYSTEM</h2>
+            <h3>END SEMESTER EXAMINATION ADMIT CARD (2025 - 2026)</h3>
+            <p>Main Campus, Examination Cell</p>
+        </div>
+
+        <!-- Details & Photo Grid -->
+        <div class="details-wrapper">
+            <table class="info-table">
+                <tr>
+                    <td class="label">Roll Number:</td>
+                    <td class="value" style="font-weight: bold; color: #1e3a8a;">STU-{{ student.email.split('@')[0] | upper }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Candidate Name:</td>
+                    <td class="value" style="font-weight: bold;">{{ student.name }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Course / Class:</td>
+                    <td class="value">{{ student.class_name }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Email Address:</td>
+                    <td class="value">{{ student.email }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Exam Center:</td>
+                    <td class="value">Block-A, Main Examination Hall</td>
+                </tr>
+            </table>
+
+            <!-- Passport Size Photo Placeholder -->
+            <div class="photo-box">
+                Affix Recent<br>Passport Size<br>Photograph
+            </div>
+        </div>
+
+        <!-- Eligible Subjects & Invigilator Sign Table -->
+        <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #0f172a;">Authorized Examination Subjects:</div>
+        <table class="exam-table">
+            <thead>
+                <tr>
+                    <th style="width: 8%;">Sr.</th>
+                    <th class="text-start" style="width: 52%;">Subject Description</th>
+                    <th style="width: 40%;">Invigilator Signature</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in eligible_subjects %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="text-start" style="font-weight: 600;">{{ sub }}</td>
+                    <td class="sign-col"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            <strong>Instructions to the Candidate:</strong>
+            <ul>
+                <li>Candidate must bring this Admit Card along with an official College Identity Card to the examination hall.</li>
+                <li>No candidate will be permitted to enter the examination hall 15 minutes after the commencement of the exam.</li>
+                <li>Mobile phones, programmable calculators, or any electronic gadgets are strictly prohibited.</li>
+            </ul>
+        </div>
+
+        <!-- Signatures Footer -->
+        <div class="footer-sigs">
+            <div>
+                <div class="sig-line" style="margin-top: 25px;">Candidate's Signature</div>
+            </div>
+            <div>
+                <div class="sig-line" style="margin-top: 25px;">Controller of Examinations</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

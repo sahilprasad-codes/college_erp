@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Workspace - College ERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #132a13;
+            --primary-mid: #31572c;
+            --primary-light: #4f772d;
+            --bg-light: #f7f9f6;
+        }
+        body { 
+            background-color: var(--bg-light);
+            color: #2d3748; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .navbar-custom {
+            background-color: var(--primary-dark);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+        }
+        .card-custom { 
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 30px rgba(19, 42, 19, 0.03); 
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 2rem;
+        }
+        .form-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #718096;
+            letter-spacing: 0.5px;
+        }
+        .form-control, .form-select {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 10px 14px;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #ffffff;
+            border-color: var(--primary-mid);
+            box-shadow: 0 0 0 4px rgba(49, 87, 44, 0.1);
+        }
+        .btn-green {
+            background-color: var(--primary-dark);
+            color: #ffffff;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            transition: all 0.2s;
+        }
+        .btn-green:hover { background-color: var(--primary-mid); color: #ffffff; }
+        
+        .table-container {
+            max-height: 320px; 
+            overflow-y: auto;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+        }
+        .table th {
+            background-color: #f1f5f9 !important;
+            color: var(--primary-dark) !important;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            padding: 12px;
+        }
+        .table td { padding: 12px; font-size: 0.9rem; }
+        .badge-green {
+            background-color: #e8f5e9;
+            color: var(--primary-mid);
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        .section-title { color: var(--primary-dark); font-weight: 800; font-size: 1.3rem; }
+        
+        .btn-delete-icon {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 1.1rem;
+            transition: transform 0.2s;
+            padding: 0;
+        }
+        .btn-delete-icon:hover { transform: scale(1.2); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark navbar-custom sticky-top py-3 shadow-sm">
+        <div class="container">
+            <span class="navbar-brand d-flex align-items-center gap-2 fw-bold">
+                <span>⚡</span> Admin Dashboard
+            </span>
+            <a href="/logout" class="btn btn-sm fw-bold rounded-3 px-3 py-2 text-danger border bg-white shadow-sm">
+                Logout Dashboard 🚪
+            </a>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, msg in messages %}
+                    <div class="alert {% if category == 'danger' %}alert-danger{% else %}alert-success{% endif %} border-0 rounded-4 shadow-sm p-3 mb-4 fw-bold" role="alert">
+                        📢 {{ msg }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row g-4">
+            
+            <div class="col-lg-5">
+                
+                <div class="card card-custom mb-4" style="border-top: 5px solid var(--primary-mid);">
+                    <h4 class="section-title mb-1">📁 Bulk Student PDF Upload</h4>
+                    <p class="text-muted small mb-3">Upload a list of students in one click.</p>
+                    
+                    <form id="bulkStudentForm" method="POST">
+                        <input type="hidden" name="action" value="bulk_student">
+                        <input type="hidden" id="extractedPdfText" name="pdf_text" value="">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">ASSOCIATE ALL STUDENTS TO CLASS</label>
+                            <select name="class_name" class="form-select" required>
+                                <option value="CSE A">CSE A 🔸</option>
+                                <option value="CSE B">CSE B</option>
+                                <option value="CSE C">CSE C</option>
+                                <option value="CSE D">CSE D</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">CHOOSE PDF FILE (.pdf)</label>
+                            <input type="file" id="pdfFileInput" class="form-control" accept=".pdf" required>
+                            <span class="text-muted d-block mt-1" style="font-size: 0.7rem;">Note: PDF text should clearly contain student names and emails.</span>
+                        </div>
+                        
+                        <button type="submit" id="uploadBtn" class="btn btn-green w-100 shadow-sm">Upload & Parse PDF ⚡</button>
+                    </form>
+                </div>
+
+                <div class="card card-custom mb-4">
+                    <h4 class="section-title mb-3">Add Single Student</h4>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="single_student">
+                        <div class="mb-3">
+                            <label class="form-label">STUDENT NAME</label>
+                            <input type="text" name="name" class="form-control" placeholder="Rahul Sharma" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">EMAIL ADDRESS</label>
+                            <input type="email" name="email" class="form-control" placeholder="rahul@college.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">CLASS SECTION</label>
+                            <select name="class_name" class="form-select" required>
+                                <option value="CSE A">CSE A</option>
+                                <option value="CSE B">CSE B</option>
+                                <option value="CSE C">CSE C</option>
+                                <option value="CSE D">CSE D</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">PASSWORD</label>
+                            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-green w-100 shadow-sm">Create Student Profile 🎓</button>
+                    </form>
+                </div>
+
+                <div class="card card-custom">
+                    <h4 class="section-title mb-3">Add New Faculty</h4>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="single_faculty">
+                        <div class="mb-3">
+                            <label class="form-label">PROFESSOR NAME</label>
+                            <input type="text" name="name" class="form-control" placeholder="Dr. Amit Verma" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">OFFICIAL EMAIL</label>
+                            <input type="email" name="email" class="form-control" placeholder="amit@college.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">DEPARTMENT</label>
+                            <input type="text" name="department" class="form-control" placeholder="Computer Science" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">PASSWORD</label>
+                            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-green w-100 shadow-sm">Create Faculty Profile 💼</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card card-custom mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="section-title mb-0">Active Students</h4>
+                        {% if students %}
+                        <form method="POST" action="/delete_all_students" onsubmit="return confirm('🚨 CRITICAL WARNING: Are you absolutely sure you want to delete ALL students permanently? This cannot be undone.');">
+                            <button type="submit" class="btn btn-danger btn-sm fw-bold rounded-3 px-3 shadow-sm">⚠️ Delete All Students</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="table-container shadow-sm">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Section</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for std in students %}
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ std[1] }}</td>
+                                    <td class="text-secondary small">{{ std[2] }}</td>
+                                    <td><span class="badge badge-green">{{ std[3] }}</span></td>
+                                    <td class="text-center">
+                                        <form method="POST" action="/delete_student/{{ std[0] }}" onsubmit="return confirm('Are you sure you want to delete this student?');" style="display:inline;">
+                                            <button type="submit" class="btn-delete-icon" title="Delete Student">🗑️</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="4" class="text-center text-muted py-3">No students registered yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card card-custom">
+                    <h4 class="section-title mb-3">Active Faculty Staff</h4>
+                    <div class="table-container shadow-sm">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fac in faculties %}
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ fac[1] }}</td>
+                                    <td class="text-secondary small">{{ fac[2] }}</td>
+                                    <td><span class="badge badge-green">{{ fac[3] }}</span></td>
+                                    <td class="text-center">
+                                        <form method="POST" action="/delete_faculty/{{ fac[0] }}" onsubmit="return confirm('Are you sure you want to delete this faculty member?');" style="display:inline;">
+                                            <button type="submit" class="btn-delete-icon" title="Delete Faculty">🗑️</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="4" class="text-center text-muted py-3">No faculty registered yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        document.getElementById('bulkStudentForm').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('pdfFileInput');
+            const hiddenInput = document.getElementById('extractedPdfText');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            // यदि टेक्स्ट पहले ही भरा हुआ है तो फॉर्म सीधे सबमिट होने दें
+            if (hiddenInput.value.trim() !== "") {
+                return true; 
+            }
+
+            e.preventDefault();
+
+            if (!fileInput.files.length) {
+                alert("Please select a PDF file first.");
+                return;
+            }
+
+            uploadBtn.innerHTML = "Parsing PDF Content... ⏳";
+            uploadBtn.disabled = true;
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function() {
+                try {
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let fullText = "";
+
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(" ");
+                        fullText += pageText + "\n";
+                    }
+
+                    // जाँच करने के लिए अलर्ट पॉपअप
+                    alert("--- DEBUG POPUP ---\nPDF extracted text preview:\n\n" + (fullText.trim() ? fullText.substring(0, 350) : "[EMPTY TEXT - This PDF might be a scanned image!]"));
+
+                    // हिडन इनपुट बॉक्स में टेक्स्ट सेट करके सबमिट ट्रिगर करें
+                    hiddenInput.value = fullText;
+                    uploadBtn.innerHTML = "Processing Profiles... 🚀";
+                    document.getElementById('bulkStudentForm').submit();
+
+                } catch (error) {
+                    console.error("Parsing Error:", error);
+                    alert("Failed to parse PDF file. Please try again with a valid text PDF.");
+                    uploadBtn.innerHTML = "Upload & Parse PDF ⚡";
+                    uploadBtn.disabled = false;
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>

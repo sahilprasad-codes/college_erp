@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Not Eligible</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; background-color: #f8f9fa; }
+        .error-box { border: 2px solid #dc3545; padding: 30px; max-width: 500px; margin: auto; background: white; border-radius: 8px; }
+        h2 { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <h2>Admit Card Blocked</h2>
+        <p>Your current attendance is <strong>{{ "%.2f"|format(percentage) }}%</strong>.</p>
+        <p>You need a minimum of <strong>75%</strong> attendance to download the admit card.</p>
+        <p>Please contact your department HOD or administration.</p>
+        <a href="{{ url_for('dashboard') }}" style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 5px;">Back to Dashboard</a>
+    </div>
+</body>
+</html>
